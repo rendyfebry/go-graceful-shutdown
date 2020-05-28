@@ -34,28 +34,37 @@ func main() {
 		srv.ListenAndServe()
 	}()
 
-	// Gracefully shutdown
-	// - make channel, and listen for SIGINT & SIGTERM
+	ImplementGraceful(srv, time.Duration(60)*time.Second)
+}
+
+// ImplementGraceful will implement graceful shutdown to the given
+// http server object. We will wait for SIGINT & SIGTERM signal
+// before initiating the graceful shutdown sequence.
+//
+// If the existing connection no yet finished after the given timeout,
+// we will forcefully shutdown the server.
+func ImplementGraceful(s *http.Server, timout time.Duration) {
+	// Make channel, and listen for SIGINT & SIGTERM
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	// - block until receive the signal
+	// Block until receive the signal
 	oscall := <-c
 	log.Println(fmt.Sprintf("Signal received:%+v", oscall))
 
-	// - create a deadline to wait for
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(60)*time.Second)
+	// Create a deadline to wait for
+	ctx, cancel := context.WithTimeout(context.Background(), timout)
 	defer cancel()
 
-	// - gracefully shutdown the http server
-	srv.Shutdown(ctx)
+	// Gracefully shutdown the http server
+	s.Shutdown(ctx)
 
-	// - exiting the program
+	// Exiting the program
 	log.Println("Shutting down service!")
 	os.Exit(0)
 }
 
-// GetUserHandler ...
+// GetUserHandler implementation
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := map[string]interface{}{
 		"id":   1,
