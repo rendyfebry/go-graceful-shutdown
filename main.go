@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,30 +26,32 @@ func main() {
 		Handler: mux,
 	}
 
+	// Run http server in go routine
 	go func() {
-		fmt.Println("Service started!")
-		fmt.Println(fmt.Sprintf("HTTP URL: http://%s:%d", host, port))
+		log.Println("Service started!")
+		log.Println(fmt.Sprintf("HTTP URL: http://%s:%d", host, port))
 
 		srv.ListenAndServe()
 	}()
 
 	// Gracefully shutdown
+	// - make channel, and listen for SIGINT & SIGTERM
 	c := make(chan os.Signal, 1)
-
-	// - catch quit via SIGINT (Ctrl+C) and SIGTERM (Kill command by the OS)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	// - block until we receive our signal.
+	// - block until receive the signal
 	oscall := <-c
-	fmt.Println(fmt.Sprintf("Signal received:%+v", oscall))
+	log.Println(fmt.Sprintf("Signal received:%+v", oscall))
 
-	// - create a deadline to wait for.
+	// - create a deadline to wait for
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(60)*time.Second)
 	defer cancel()
 
-	// - doesn't block if no connections, but will otherwise wait until the timeout deadline.
+	// - gracefully shutdown the http server
 	srv.Shutdown(ctx)
-	fmt.Println("Shutting down service!")
+
+	// - exiting the program
+	log.Println("Shutting down service!")
 	os.Exit(0)
 }
 
@@ -61,7 +64,9 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	ub, _ := json.Marshal(user)
 
+	// Add 5 second timeout to simulate slow upstream services
 	time.Sleep(5 * time.Second)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(ub)
 }
