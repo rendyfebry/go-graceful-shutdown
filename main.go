@@ -43,7 +43,7 @@ func main() {
 //
 // If the existing connection no yet finished after the given timeout,
 // we will forcefully shutdown the server.
-func ImplementGraceful(s *http.Server, timout time.Duration) {
+func ImplementGraceful(srv *http.Server, timout time.Duration) {
 	// Make channel, and listen for SIGINT & SIGTERM
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -57,7 +57,7 @@ func ImplementGraceful(s *http.Server, timout time.Duration) {
 	defer cancel()
 
 	// Gracefully shutdown the http server
-	s.Shutdown(ctx)
+	srv.Shutdown(ctx)
 
 	// Exiting the program
 	log.Println("Shutting down service!")
