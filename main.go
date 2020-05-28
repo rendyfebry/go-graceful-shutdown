@@ -34,17 +34,6 @@ func main() {
 		srv.ListenAndServe()
 	}()
 
-	timeout := time.Duration(60) * time.Second
-	ImplementGraceful(srv, timeout)
-}
-
-// ImplementGraceful will implement graceful shutdown to the given
-// http server object. We will wait for SIGINT & SIGTERM signal
-// before initiating the graceful shutdown sequence.
-//
-// If the existing connection no yet finished after the given timeout,
-// we will forcefully shutdown the server.
-func ImplementGraceful(srv *http.Server, timeout time.Duration) {
 	// Make channel, and listen for SIGINT & SIGTERM
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -54,7 +43,7 @@ func ImplementGraceful(srv *http.Server, timeout time.Duration) {
 	log.Println(fmt.Sprintf("Signal received:%+v", oscall))
 
 	// Create a deadline to wait for
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(60)*time.Second)
 	defer cancel()
 
 	// Gracefully shutdown the http server
