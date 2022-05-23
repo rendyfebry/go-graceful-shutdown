@@ -1,3 +1,3 @@
 # Golang Gracefull Shutdown
 
-Gracefull shutdown implementation on Golang
+Gracefull shutdown implementation on Golang.
